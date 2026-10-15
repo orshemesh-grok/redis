@@ -180,7 +180,8 @@ int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask,
 
 void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask)
 {
-    if (fd >= eventLoop->setsize) return;
+    /* events[] is grown lazily: fds at or past nevents have no events. */
+    if (fd >= eventLoop->nevents) return;
     aeFileEvent *fe = &eventLoop->events[fd];
     if (fe->mask == AE_NONE) return;
 
@@ -201,7 +202,7 @@ void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask)
 }
 
 void *aeGetFileClientData(aeEventLoop *eventLoop, int fd) {
-    if (fd >= eventLoop->setsize) return NULL;
+    if (fd >= eventLoop->nevents) return NULL;
     aeFileEvent *fe = &eventLoop->events[fd];
     if (fe->mask == AE_NONE) return NULL;
 
@@ -209,7 +210,7 @@ void *aeGetFileClientData(aeEventLoop *eventLoop, int fd) {
 }
 
 int aeGetFileEvents(aeEventLoop *eventLoop, int fd) {
-    if (fd >= eventLoop->setsize) return 0;
+    if (fd >= eventLoop->nevents) return 0;
     aeFileEvent *fe = &eventLoop->events[fd];
 
     return fe->mask;
